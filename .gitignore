@@ -1,0 +1,11 @@
+# Backend
+__pycache__/
+*.pkl
+*.csv
+.env
+venv/
+
+# Frontend
+node_modules/
+dist/
+.DS_Store
