@@ -19,8 +19,9 @@ app.add_middleware(
 )
 
 # Paths
-MODEL_PATH = "backend/models/nirf_rank_predictor.pkl"
-REF_PATH = "backend/models/reference_ranks.pkl"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, "models", "nirf_rank_predictor.pkl")
+REF_PATH = os.path.join(BASE_DIR, "models", "reference_ranks.pkl")
 
 # Global variables for model
 model = None
