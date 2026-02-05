@@ -10,9 +10,9 @@ import {
   ShieldCheck, Activity, BarChart3, Info
 } from 'lucide-react';
 
-const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+const API_URL = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
   ? "http://localhost:8000" 
-  : "/api";
+  : "https://your-backend-service.onrender.com");
 
 interface PredictionResult {
   predicted_score: number;
