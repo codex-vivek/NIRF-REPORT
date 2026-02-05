@@ -70,75 +70,58 @@ def predict_rank(data: NIRFInput):
     pred_score = model.predict(input_df)[0]
     
     # 2. Map to Rank Range
-    # Find where this score would fit in the reference distribution
-    # We look for rows with score close to pred_score
-    # Logic: Find ranks of scores within +/- 2 points (approx confidence)
-    
-    # Simple logic: Find the index in sorted reference
-    # Check bounds
     preds = reference_ranks['final_score'].values
     ranks = reference_ranks['Rank'].values
     
-    # Ideally, we find the index where pred_score would be inserted
-    idx = np.searchsorted(-preds, -pred_score) # - for descending order
-    # idx is the 0-based rank index. So Rank is approx idx + 1.
+    # Find approx rank
+    idx = np.searchsorted(-preds, -pred_score) 
     estimated_rank = idx + 1
     
-    # Define range (e.g., +/- 5 ranks or based on score density)
-    # Heuristic: +/- 5% of the rank
-    rank_margin = max(5, int(estimated_rank * 0.1))
+    rank_margin = max(5, int(estimated_rank * 0.15))
     rank_min = max(1, estimated_rank - rank_margin)
     rank_max = estimated_rank + rank_margin
     
     # 3. Explainability (SHAP)
-    shap_values = explainer.shap_values(input_df)
-    # shap_values is a list or array. For regression, it's (1, num_features)
-    shap_dict = dict(zip(input_df.columns, shap_values[0]))
+    shap_vals = explainer.shap_values(input_df)
+    shap_dict = dict(zip(input_df.columns, shap_vals[0]))
     
-    # 4. Recommendations
-    # Identify weakest parameter (relative to max possible or contribution)
-    # Simple logic: "Increase [Weakest Feature] to improve."
-    # Advanced: Simulate +X% increase and see impact.
-    
+    # 4. Data-Driven Recommendations
     recommendations = []
     
-    # Check for low values
-    params = data.dict()
-    for key, val in params.items():
-        if val < 50: # Threshold
-            recommendations.append(f"Focus on improving {key} (Current: {val}). It contributes significantly to the gap.")
-            
-    # Impact Analysis based on Feature Importance
-    # Logic: Which feature has the highest potential for growth?
-    sorted_importances = sorted(shap_dict.items(), key=lambda x: x[1])
-    # Features dragging the score down will have negative SHAP (relative to mean) or lower positive.
-    # Actually SHAP matches deviation from mean.
+    # Logic A: Identify features pulling the score down (negative SHAP)
+    sorted_shap = sorted(shap_dict.items(), key=lambda x: x[1])
+    for feat, val in sorted_shap:
+        if val < 0:
+            recommendations.append(f"AI Observation: {feat} is currently below the benchmark for your target range, detracting {abs(val):.2f} pts from your score.")
     
-    # Let's suggest improving the metrics where SHAP is lowest (pulling down) OR 
-    # where the absolute value is low?
-    # Better: Identify the param with the most "headroom" (Max - Current) * Weight
-    
-    max_vals = {'TLR': 100, 'RPC': 100, 'GO': 100, 'OI': 100, 'PR': 100}
-    weights = {'TLR': 0.3, 'RPC': 0.3, 'GO': 0.2, 'OI': 0.1, 'PR': 0.1}
-    
-    potential_gain = {}
-    for k in params:
-        headroom = max_vals[k] - params[k]
-        gain = headroom * weights[k]
-        potential_gain[k] = gain
+    # Logic B: Simulated Impact (Purely ML based)
+    impacts = {}
+    for feat in input_df.columns:
+        simulated_input = input_df.copy()
+        simulated_input[feat] = min(100, simulated_input[feat].values[0] * 1.1)
+        new_score = model.predict(simulated_input)[0]
+        impacts[feat] = new_score - pred_score
         
-    best_roi = max(potential_gain, key=potential_gain.get)
-    if potential_gain[best_roi] > 1:
-        recommendations.append(f"High Impact Action: Improving '{best_roi}' offers the best ROI for rank improvement due to its weight and current gap.")
+    best_feat = max(impacts, key=impacts.get)
+    if impacts[best_feat] > 0.1:
+        recommendations.append(f"ML Recommendation: Increasing {best_feat} by 10% would yield the highest score boost (+{impacts[best_feat]:.2f} pts) based on learned patterns.")
+
+    # Generic high level advice
+    top_importance = sorted(shap_dict.items(), key=lambda x: abs(x[1]), reverse=True)[0][0]
+    recommendations.append(f"Critical Area: {top_importance} shows the highest volatility in your profile. Prioritize data quality and investment here.")
 
     return {
         "predicted_score": pred_score,
         "rank_range_min": rank_min,
         "rank_range_max": rank_max,
         "shap_values": shap_dict,
-        "recommendations": recommendations
+        "recommendations": recommendations[:5]
     }
 
 @app.get("/")
 def health_check():
-    return {"status": "ok", "service": "NIRF AI Predictor"}
+    return {
+        "status": "ok", 
+        "service": "NIRF AI Predictor",
+        "developer": "VIVEK AI"
+    }

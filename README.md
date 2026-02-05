@@ -25,14 +25,13 @@ This is a fully AI and machine learning–based project developed using Python a
 # Install dependencies
 pip install -r backend/requirements.txt
 
-# Generate Data & Train Model
-python backend/app/generate_data.py
-python backend/app/train_model.py
+# Generate Data & Train Model (Required for first run)
+cd backend
+python train_model.py
 
-# Run Server
+# Run Server (From project root)
 uvicorn backend.app.main:app --reload --port 8000
 ```
-*Note: The system requires the model to be trained first (`train_model.py`).*
 
 ### 2. Frontend Setup
 ```bash
