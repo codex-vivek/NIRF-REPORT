@@ -118,7 +118,7 @@ with st.sidebar:
 # Main Page
 st.markdown("<div style='text-align: center; margin-bottom: 40px;'>", unsafe_allow_html=True)
 st.title("NIRF Rank AI Predictor")
-st.markdown("<p style='color: #94a3b8;'>Developed by the Dept.of Computer Science and Engineering,KMCLU.</p>", unsafe_allow_html=True)
+st.markdown("<p style='color: #94a3b8;'>Developed by the Dept.of Computer Science and Engineering, KMCLU.</p>", unsafe_allow_html=True)
 st.markdown("</div>", unsafe_allow_html=True)
 
 if not model:

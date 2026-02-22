@@ -82,7 +82,7 @@ function App() {
             </div>
             <h1>NIRF Rank AI Predictor</h1>
             <p className="subtitle">
-              Developed by the Dept.of Computer Science and Engineering,KMCLU.
+              Developed by the Dept.of Computer Science and Engineering, KMCLU.
             </p>
 
             <form onSubmit={handlePredict} className="glass-card">
